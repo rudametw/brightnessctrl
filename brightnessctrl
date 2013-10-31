@@ -6,8 +6,10 @@ import sys
 
 appdir = '%s/.brightnessctrl' % os.getenv('HOME')
 pipefile = 'OSDpipe'
-actual_brightness_file = '/sys/class/backlight/psb_intel_backlight/actual_brightness'
-maximum_brightness_in_file = 398310
+#actual_brightness_file = '/sys/class/backlight/psb_intel_backlight/actual_brightness'
+actual_brightness_file = '/sys/class/backlight/intel_backlight/brightness'
+#maximum_brightness_in_file = 398310
+maximum_brightness_in_file = 4882
 
 pipefilepath = '%s/%s' % (appdir, pipefile)
 
@@ -53,9 +55,13 @@ elif parity > 1:
 	parser.error('provide only one brightness-option(-g/-s/-p/-m)')
 elif options.g != -1:
 	f = open(actual_brightness_file, 'r')
-	curB = (int(f.readline())*255)/maximum_brightness_in_file
+	#curB = (int(f.readline())*255)/maximum_brightness_in_file
+	curB = (int(f.readline()))
+	curB_old = (curB * 255)/maximum_brightness_in_file
+	#curB_old = (int(f.readline())*255)/maximum_brightness_in_file
 	f.close()
 	print 'Current brightness is %d.' % curB
+	print 'Normalized brightness is %d.' % curB_old
 elif options.s != -1:
 	s = int(options.s)
 	if 0 <= s <= 255:
@@ -64,40 +70,78 @@ elif options.s != -1:
 		showOSD(s)
 	else:
 		parser.error('brightness value should be an integer between 0 and 255 (inclusive)')
+
 elif options.p != -1:
 	p = int(options.p)
 	f = open(actual_brightness_file, 'r')
-	curB = (int(f.readline())*255)/maximum_brightness_in_file
-	f.close()
+	curB = (int(f.readline()))
+	curB_old = (curB * 255)/maximum_brightness_in_file
+	#curB_old = (int(f.readline())*255)/maximum_brightness_in_file
 	finB = curB + p
-	if 0 <= finB <= 255:
-		os.system('sudo setpci -s \'00:02.0\' F4.B=' + hex(finB)[2:])
+	f.close()
+	print 'Current brightness: '
+	#print '	  curB old = %d' % (curB_old)
+	print '	  curB = %d' % (curB)
+
+	if 0 <= finB <= maximum_brightness_in_file:
+		print finB
+		#os.system("echo 'finB' | sudo tee /sys/class/backlight/intel_backlight/brightness")
+		cmd = "echo " + str(finB) + " | sudo tee /sys/class/backlight/intel_backlight/brightness"
+		print cmd
+		os.system(cmd)
+		#os.system('sudo setpci -s \'00:02.0\' F4.B=' + hex(finB)[2:])
+		#print 'sudo setpci -s \'00:02.0\' F4.B=' + hex(finB)[2:]
 		print 'Brightness incremented by %d. Current brightness is %d.' % (p, finB)
 		showOSD(finB)
 	if 0 > finB:
-		os.system('sudo setpci -s \'00:02.0\' F4.B=0')
+		#os.system('sudo setpci -s \'00:02.0\' F4.B=0')
+		cmd = "echo " + str(0) + " | sudo tee /sys/class/backlight/intel_backlight/brightness"
+		print cmd
+		os.system(cmd)
 		print 'Set to minimum brightness(0).'
 		showOSD(0)
-	if finB > 255:
+	if finB > maximum_brightness_in_file:
 		os.system('sudo setpci -s \'00:02.0\' F4.B=ff')
-		print 'Set to maximum brightness(255).'
-		showOSD(255)
+		cmd = "echo " + str(maximum_brightness_in_file) + " | sudo tee /sys/class/backlight/intel_backlight/brightness"
+		print cmd
+		os.system(cmd)
+		print 'Set to maximum brightness(%d).' % (maximum_brightness_in_file)
+		showOSD(maximum_brightness_in_file)
+
 elif options.m != -1:
 	m = int(options.m)
 	f = open(actual_brightness_file, 'r')
-	curB = (int(f.readline())*255)/maximum_brightness_in_file
-	f.close()
+	curB = (int(f.readline()))
+	curB_old = (curB * 255)/maximum_brightness_in_file
+	#curB_old = (int(f.readline())*255)/maximum_brightness_in_file
 	finB = curB - m
-	if 0 <= finB <= 255:
-		os.system('sudo setpci -s \'00:02.0\' F4.B=' + hex(finB)[2:])
+	f.close()
+	print 'Current brightness: '
+	#print '	  curB old = %d' % (curB_old)
+	print '	  curB = %d' % (curB)
+
+	if 0 <= finB <= maximum_brightness_in_file:
+		#print finB
+		#os.system("echo 'finB' | sudo tee /sys/class/backlight/intel_backlight/brightness")
+		cmd = "echo " + str(finB) + " | sudo tee /sys/class/backlight/intel_backlight/brightness"
+		print cmd
+		os.system(cmd)
+		#os.system('sudo setpci -s \'00:02.0\' F4.B=' + hex(finB)[2:])
+		#print 'sudo setpci -s \'00:02.0\' F4.B=' + hex(finB)[2:]
 		print 'Brightness decremented by %d. Current brightness is %d.' % (m, finB)
 		showOSD(finB)
 	if 0 > finB:
-		os.system('sudo setpci -s \'00:02.0\' F4.B=0')
+		#os.system('sudo setpci -s \'00:02.0\' F4.B=0')
+		cmd = "echo " + str(0) + " | sudo tee /sys/class/backlight/intel_backlight/brightness"
+		print cmd
+		os.system(cmd)
 		print 'Set to minimum brightness(0).'
 		showOSD(0)
-	if finB > 255:
+	if finB > maximum_brightness_in_file:
 		os.system('sudo setpci -s \'00:02.0\' F4.B=ff')
-		print 'Set to maximum brightness(255).'
-		showOSD(255)
+		cmd = "echo " + str(maximum_brightness_in_file) + " | sudo tee /sys/class/backlight/intel_backlight/brightness"
+		print cmd
+		os.system(cmd)
+		print 'Set to maximum brightness(%d).' % (maximum_brightness_in_file)
+		showOSD(maximum_brightness_in_file)
 
